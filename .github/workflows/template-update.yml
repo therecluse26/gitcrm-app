@@ -1,0 +1,75 @@
+# Proposes the template's latest release to this copy (spec 11, ADR-026). This is a software
+# task, not CRM work (ADR-006): no CRM data passes through it.
+#
+# It runs only this repository's own code. scripts/template-update.ts runs before any template
+# file is in the working tree, and nothing runs after. The owner reviews and merges the update.
+# Actions are pinned to commit SHAs, because a tag can move.
+name: Template update
+
+on:
+  schedule:
+    - cron: '17 13 * * 1' # each Monday morning, US Eastern
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: template-update
+  cancel-in-progress: false
+
+env:
+  TEMPLATE: therecluse26/GitCRM
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write # push the update branch
+      pull-requests: write # open the pull request
+      issues: write # or an issue, when Actions may not open pull requests here
+    steps:
+      # The push of the update branch uses the credentials that checkout keeps.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Propose the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          read -r is_template base < <(gh api "repos/$GITHUB_REPOSITORY" --jq '"\(.is_template) \(.default_branch)"')
+          if [ "$is_template" = true ]; then
+            echo "This is the template, so it has nothing to update from."
+            exit 0
+          fi
+          if ! tag=$(gh api "repos/$TEMPLATE/releases/latest" --jq .tag_name); then
+            echo "::error::GitHub returned no latest release of $TEMPLATE. The template must be public, with at least one release."
+            exit 1
+          fi
+          branch="template-update/$tag"
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "The branch $branch exists already."
+            exit 0
+          fi
+          # An assignment, so a failed script fails the job (set -e).
+          updated=$(node scripts/template-update.ts "$TEMPLATE" "$tag" "$RUNNER_TEMP")
+          if [ -z "$updated" ]; then
+            echo "This copy is up to date with $tag."
+            exit 0
+          fi
+          git push -q origin "$branch"
+          title="Update GitCRM to $tag"
+          if gh pr create --base "$base" --head "$branch" --title "$title" --body-file "$RUNNER_TEMP/body.md"; then
+            exit 0
+          fi
+          # GitHub's default: Settings > Actions > General > "Allow GitHub Actions to create and
+          # approve pull requests" is off. The same text goes into an issue instead.
+          {
+            cat "$RUNNER_TEMP/body.md"
+            echo
+            echo "GitHub Actions may not open pull requests in this repository, so this is an issue. Create the pull request: https://github.com/$GITHUB_REPOSITORY/compare/$base...$branch?expand=1"
+          } > "$RUNNER_TEMP/issue.md"
+          gh issue create --title "$title" --body-file "$RUNNER_TEMP/issue.md"

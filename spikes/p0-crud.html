@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitCRM P0 spike: REST CRUD</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; }
+  label { display: block; margin: 0.5rem 0; }
+  input { width: 100%; max-width: 28rem; }
+  pre { background: #f4f4f4; padding: 1rem; overflow: auto; white-space: pre-wrap; }
+</style>
+<h1>GitCRM P0 spike: REST CRUD with a fine-grained PAT</h1>
+<p>Run this only against a disposable private repo whose name starts with <code>gitcrm-spike</code>.
+  The token stays in this page's memory. The page never stores or logs it.</p>
+<form id="form">
+  <label>Repository (owner/name) <input id="repo" required placeholder="you/gitcrm-spike" autocomplete="username"></label>
+  <label>Fine-grained PAT <input id="pat" type="password" required autocomplete="current-password"></label>
+  <button>Run checks</button>
+</form>
+<pre id="out"></pre>
+<script type="module">
+import { runChecks } from './p0-crud.js';
+
+const out = document.getElementById('out');
+
+document.getElementById('form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  // Two runs at once race each other on the branch, so allow one at a time.
+  const button = event.target.querySelector('button');
+  button.disabled = true;
+  out.textContent = '';
+  const results = [];
+  const record = (name, ok, detail = '', ms = 0) => {
+    results.push({ name, ok, detail, ms });
+    out.textContent += `${ok ? 'PASS' : 'FAIL'}  ${name}${ms ? ` (${ms} ms)` : ''}${detail ? ` - ${detail}` : ''}\n`;
+  };
+  const [owner, repo] = document.getElementById('repo').value.trim().split('/');
+  try {
+    await runChecks({ token: document.getElementById('pat').value.trim(), owner, repo, record });
+  } catch (error) {
+    record('Unexpected error', false, String(error));
+  }
+  const report = { spike: 'S-02', runner: navigator.userAgent, when: new Date().toISOString(), results };
+  out.textContent += `\nResults JSON (safe to share; it contains no token):\n${JSON.stringify(report, null, 2)}\n`;
+  button.disabled = false;
+});
+</script>
+</html>
