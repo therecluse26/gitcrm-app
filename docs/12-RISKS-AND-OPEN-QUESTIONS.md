@@ -44,11 +44,9 @@ No spike has checked these provider behaviors. For each one, GitCRM works with e
 | Whether API commits count toward "6 pushes per minute" | S-05 | Each save is one user action. A bulk change is one commit | Many quick saves to a spike repo |
 | Whether the S-07 link fills in `Contents: Read and write` | S-07 | Onboarding tells users to check that Contents is set to Read and write | Open the link while signed in to GitHub |
 | Save prompts for the PAT in browsers and password managers | docs/05 | The PAT field is a real password field | By hand, in each major browser |
-| A Contents API PUT to an empty repo, with a fine-grained PAT | S-09, spec 01 | Initialize sends it as the first commit; a refusal shows GitHub's message, and the form stays | Initialize on a new empty data repo |
 | What a read-only fine-grained PAT gets from the write check on an empty repo | S-09, spec 01 | A `409` counts as writable, so a read-only token learns at Initialize | Connect a read-only token to an empty spike repo |
 | Whether `github.com/new` accepts an organization as `owner` | Spec 01 | The link fills in the typed owner | Open the link with an organization's name |
-| Whether GitHub runs the deploy workflow on the commit that the template creates | Spec 09 | The README tells the owner to run the workflow after turning on Pages | Make a repo from the template |
-| The template update in a real copy: the push to `main` and the Deploy start, with the workflow's own token | Spec 11 | Unit tests run the script against local repositories | Release v0.3.0, then click **Update GitCRM** in a copy that runs 0.3.0's workflow |
+| The template update in a real copy: the push to `main` and the Deploy start, with the workflow's own token | Spec 11 | Unit tests run the script against local repositories | Release v0.3.1, then click **Update GitCRM** in the owner's copy, which runs 0.3.0 |
 | First-load times from other networks | S-04 | The GraphQL time budget slows a large load instead of failing (ADR-022) | Run `spikes/bench-load.js` from another network |
 
 ## P0 spike record template
@@ -297,6 +295,16 @@ GitHub allows 60 s of GraphQL server time per minute, and says to estimate it fr
   - Each owner turns on Pages once by hand (ADR-025).
   - Setup links to a pre-filled `github.com/new` form for the private data repo. Initialize must then work on an empty repo: Connect treats the write check's `409` as "empty", not as a refusal.
 - **Follow-up:** check a Contents API PUT to an empty repo with a fine-grained PAT, in the first run of the new setup ("Not verified yet").
+- **Live run, 2026-11-01 (EDT before 2 AM, EST after).** The owner set up a copy with no command line:
+
+| Check | Result |
+| --- | --- |
+| "Use this template" → `therecluse26/gitcrm-app`, public | One commit. The API shows `template_repository: therecluse26/GitCRM` |
+| Deploy on the copy's first commit | GitHub ran it (event `push`, 1:23 AM EDT). The owner turned on Pages before the deploy job started, so every job passed by 1:26 AM EDT |
+| The pre-filled `github.com/new` link | `therecluse26/gitcrm-data` was created private, with the description from the link (1:35 PM EST) |
+| Initialize on that empty repo, with a fine-grained PAT | The Contents API PUT made the first commit, "gitcrm: initialize workspace" (1:36 PM EST) |
+| The first update of the copy, to `v0.3.0` | Pushed by hand, because the copy's old workflow could not change its own file. The push needed a login with the `workflow` scope. Deploy ran on the push and passed in 2.5 minutes |
+
 
 ## Most important product decision
 

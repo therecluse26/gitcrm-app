@@ -1,6 +1,6 @@
 # GitCRM - Project Starter
 
-**Status:** Phase 2 is built and tested against a fake GitHub: connecting, setting up a workspace, contacts, companies, the opportunity pipeline, tasks, and activity notes work; other people's changes show when you return to the tab. Phase 3 has begun: Search finds every record type, Settings exports the records as a JSON snapshot or CSV files, and Delete lists every change before one commit removes the record. Browser tests cover each failure path in `docs/10`. The built app runs under a strict Content Security Policy, and each build is audited (docs/07). Browser tests check each page against WCAG 2.2 AA (docs/08). GitCRM is a template repository: each owner deploys their own copy to GitHub Pages, after every test passes (ADR-025, spec 09). There is no central copy. A manual run against a real private repository is still to do  
+**Status:** Phase 2 is built and tested against a fake GitHub: connecting, setting up a workspace, contacts, companies, the opportunity pipeline, tasks, and activity notes work; other people's changes show when you return to the tab. Phase 3 has begun: Search finds every record type, Settings exports the records as a JSON snapshot or CSV files, and Delete lists every change before one commit removes the record. Browser tests cover each failure path in `docs/10`. The built app runs under a strict Content Security Policy, and each build is audited (docs/07). Browser tests check each page against WCAG 2.2 AA (docs/08). GitCRM is a template repository: each owner deploys their own copy to GitHub Pages, after every test passes (ADR-025, spec 09). There is no central copy. On 2026-11-01 the owner's own copy connected to a real private data repository and initialized it  
 **Last reviewed:** 2026-10-31  
 **Audience:** solo developers and tiny teams who want a useful CRM without operating a database or backend.
 
@@ -17,7 +17,7 @@ You need a GitHub account and a browser. You need no command line, no server, an
 
 1. On this repository's page, click **Use this template**, then **Create a new repository**. Choose any name, such as `gitcrm`. Public is fine.
 2. In the new repository, open **Settings → Pages**. Set **Source** to **GitHub Actions**. The workflow cannot turn this on itself.
-3. Open the **Actions** tab, then the **Deploy** workflow, then **Run workflow** on `main`. Wait until every job passes, about 4 minutes.
+3. Open the **Actions** tab. GitHub runs **Deploy** on your copy's first commit. If that run failed at **Configure Pages**, because Pages was not on yet, open it and click **Re-run all jobs**. Wait until every job passes, about 3 minutes.
 4. Create the data repository: [github.com/new](https://github.com/new?name=gitcrm-data&visibility=private&owner=@me&description=GitCRM+records). Keep it **Private**. It may stay empty: GitCRM's Initialize step makes its first commit.
 5. Open your site: `https://<your-user>.github.io/<app-repository>/`. The connect screen also links to the form from step 4.
 6. **Repository** starts as `<your-user>/gitcrm-data`; change it if you chose another name. Then follow the link to GitHub's token form. On GitHub's form, choose **Only select repositories**, and pick the data repository. Check that **Contents** is **Read and write**. Create the token.
