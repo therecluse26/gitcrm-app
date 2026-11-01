@@ -50,8 +50,13 @@ export async function inspectRepository(client: GitHubClient, owner: string, rep
 // ADR-025: a copy runs at <owner>.github.io/<app repo>/, and its owner makes the data repo
 // beside it. On another host there is nothing to suggest.
 export function suggestedRepo(hostname: string): { owner: string; repo: string } | null {
-  const match = /^([A-Za-z0-9-]{1,39})\.github\.io$/i.exec(hostname);
-  return match ? { owner: match[1], repo: 'gitcrm-data' } : null;
+  const owner = pagesOwner(hostname);
+  return owner ? { owner, repo: 'gitcrm-data' } : null;
+}
+
+// The owner of a GitHub Pages site, <owner>.github.io (ADR-025).
+export function pagesOwner(hostname: string): string | null {
+  return /^([A-Za-z0-9-]{1,39})\.github\.io$/i.exec(hostname)?.[1] ?? null;
 }
 
 // GitHub's new-repository form, filled in as a private repo (S-09). `@me` is the signed-in user.
@@ -104,13 +109,16 @@ export function describeConnectError(error: unknown, repoName: string): string {
 }
 
 // GitHub's token form, filled in for this repo's owner (S-07). No parameter can select the
-// repository, so the description and the connect screen tell the user to pick it.
+// repository, so the description and the connect screen tell the user to pick it. 90 days is the
+// owner's choice (2026-11-01): fewer new tokens than GitHub's 30-day default. An organization's
+// token lifetime policy can still make it shorter.
 export function tokenLink(owner: string, repo: string): string {
   const params = new URLSearchParams({
     name: `GitCRM ${repo}`.slice(0, 40),
     description: `GitCRM access to ${owner}/${repo}. Under Repository access, choose "Only select repositories" and pick this repository.`,
     target_name: owner,
     contents: 'write',
+    expires_in: '90',
   });
   return `https://github.com/settings/personal-access-tokens/new?${params}`;
 }

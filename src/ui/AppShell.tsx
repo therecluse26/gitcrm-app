@@ -6,6 +6,7 @@ import { useApp } from '@/app/store.ts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { UpdateBanner } from './UpdateBanner.tsx';
 
 const NAV = [
   { to: '/', label: 'Home' },
@@ -105,6 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <main ref={main} tabIndex={-1} className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
+          <UpdateBanner />
           {'message' in sync && (
             <Alert role="alert">
               <AlertDescription>{sync.message} GitCRM is showing the records it has, read-only, until a refresh succeeds.</AlertDescription>

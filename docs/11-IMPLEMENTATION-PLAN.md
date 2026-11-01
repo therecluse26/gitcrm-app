@@ -65,6 +65,7 @@ Owner decision 2026-10-31, after the first run against a real repository (ADR-02
 - [x] 2. The setup screen (spec 01). On `<owner>.github.io`, Repository starts as `<owner>/gitcrm-data`. A link opens a pre-filled, private `github.com/new` form, then the token link follows. An empty data repository loads as an empty snapshot, and Initialize makes its first commit: Connect treats the `409` "Git Repository is empty." as an empty repository (S-09).
 - [x] 3. Template updates (spec 11). `.github/workflows/template-update.yml` runs each Monday and by hand. For a newer release it pushes `template-update/<tag>` with the template's files, except `.github/workflows/`, and opens a pull request, or an issue when Actions may not open one. The copy's history is unrelated to the template's, so the update compares files, not commits. The template must be public for copies to read its releases.
 - [ ] 4. A manual run on the owner's own copy, from "Use this template" to the first record.
+- [x] 5. The update button (spec 11, owner decision 2026-11-01). On a copy's GitHub Pages site, the app reads the template's latest release with no token. When it is newer, a banner shows **Update GitCRM**, which opens the copy's Template update workflow. The workflow now runs only by hand, commits the release to `main`, and starts Deploy. No pull request, no schedule. A release whose `package.json` has another version is refused.
 
 ## Future considerations (not promises)
 

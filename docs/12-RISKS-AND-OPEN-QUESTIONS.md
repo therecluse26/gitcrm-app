@@ -16,7 +16,7 @@ These are **real unresolved dependencies**, not minor TODOs. The docs deliberate
 | R-10 | Medium | CRM migration CSV can lose relationships/notes | Built (spec 05): the JSON snapshot holds each file with the same text, and the CSV export reads back to the same records (`src/core/export.test.ts`) | Raw JSON always available |
 | R-11 | High | Fine-grained PATs cannot be used by outside or repository collaborators (GitHub docs, S-05), so collaborators on a personal repo cannot use GitCRM | Answered by S-05. S-03 still checks the org approval flow live | Decided: team workspaces live in a GitHub organization, and every teammate is an org member (ADR-018); never ask users for classic or shared PATs |
 | R-12 | Closed | Each Cloudflare Pages deployment of the central copy stayed reachable at its own address, `<hash>.gitcrm.pages.dev` | Closed 2026-10-31: the central copy is taken down (ADR-025). The owner deletes the Cloudflare project, with every deployment | None needed |
-| R-13 | Medium | Anyone who can push to `main` in an owner's app repository, or who controls an action the workflow uses, can change that owner's page and read the PAT typed into it | Done (spec 09): no secrets in the workflow; the deploy job runs no project code; actions are pinned to commit SHAs; the live check compares the site with the tested build. Template updates arrive as pull requests that the owner reviews (ADR-026) | If the PAT leaks: revoke it on GitHub, and make a new one. It reaches only the data repository |
+| R-13 | Medium | Anyone who can push to `main` in an owner's app repository, or who controls an action the workflow uses, can change that owner's page and read the PAT typed into it | Done (spec 09): no secrets in the workflow; the deploy job runs no project code; actions are pinned to commit SHAs; the live check compares the site with the tested build. A template update deploys only when the owner runs it, and a revert undoes it (ADR-026) | If the PAT leaks: revoke it on GitHub, and make a new one. It reaches only the data repository |
 
 ## P0 results
 
@@ -48,7 +48,7 @@ No spike has checked these provider behaviors. For each one, GitCRM works with e
 | What a read-only fine-grained PAT gets from the write check on an empty repo | S-09, spec 01 | A `409` counts as writable, so a read-only token learns at Initialize | Connect a read-only token to an empty spike repo |
 | Whether `github.com/new` accepts an organization as `owner` | Spec 01 | The link fills in the typed owner | Open the link with an organization's name |
 | Whether GitHub runs the deploy workflow on the commit that the template creates | Spec 09 | The README tells the owner to run the workflow after turning on Pages | Make a repo from the template |
-| The template update in a real copy: the push of `template-update/<tag>`, and the pull request or the issue, with the workflow's own token | Spec 11 | A local run with a stub `gh` passed both paths | Release v0.1.0 or later, then run Template update in a copy |
+| The template update in a real copy: the push to `main` and the Deploy start, with the workflow's own token | Spec 11 | Unit tests run the script against local repositories | Release v0.3.0, then click **Update GitCRM** in a copy that runs 0.3.0's workflow |
 | First-load times from other networks | S-04 | The GraphQL time budget slows a large load instead of failing (ADR-022) | Run `spikes/bench-load.js` from another network |
 
 ## P0 spike record template
@@ -238,7 +238,7 @@ GitHub allows 60 s of GraphQL server time per minute, and says to estimate it fr
   - `expires_in`: 1 to 366 days, or `none`. Without it, 30 days, or less if the owner has a token lifetime policy.
   - A permission and level, such as `contents=write`. Write includes read, and contents comes with metadata read.
   - No parameter selects repositories.
-- **Decision:** the connection screen builds the link from the `owner/repo` the user typed: `?name=GitCRM+<repo>&description=<text>&target_name=<owner>&contents=write`. The user must still choose "Only select repositories" and pick the repo; onboarding says so. Proposal: leave out `expires_in`, so GitHub's 30-day default or the org's policy applies.
+- **Decision:** the connection screen builds the link from the `owner/repo` the user typed: `?name=GitCRM+<repo>&description=<text>&target_name=<owner>&contents=write&expires_in=90`. The user must still choose "Only select repositories" and pick the repo; onboarding says so. The owner chose 90 days on 2026-11-01: fewer new tokens than the 30-day default, with a longer window for a leaked token. An org's policy can make it shorter.
 - **Follow-up:** the owner created the S-02 browser-run token from this link (2026-10-28). The token first ended up with no permissions; it is not known whether the link failed to fill in Contents. Onboarding therefore tells users to check that Contents is set to Read and write.
 
 ### S-08: Repo checks and permission failures

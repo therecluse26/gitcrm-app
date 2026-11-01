@@ -15,3 +15,13 @@ export async function routeFakeGitHub(target: Page | BrowserContext, options: Fa
   });
   return fake;
 }
+
+// ADR-025: each copy runs at <owner>.github.io/<app repo>/. The route serves the same build there.
+export const PAGES_SITE = 'https://octo-dev.github.io/gitcrm/';
+
+export async function servePagesSite(page: Page, baseURL: string): Promise<void> {
+  await page.route(`${PAGES_SITE}**`, async (route) => {
+    const path = new URL(route.request().url()).pathname.replace('/gitcrm/', '');
+    await route.fulfill({ response: await route.fetch({ url: new URL(path, baseURL).href }) });
+  });
+}

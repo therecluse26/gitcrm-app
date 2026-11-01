@@ -3,25 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { isNewer, prepareUpdate } from './template-update.ts';
+import { applyUpdate } from './template-update.ts';
 
-describe('isNewer', () => {
-  it('compares vMAJOR.MINOR.PATCH with the copy version, number by number', () => {
-    expect(isNewer('v0.2.0', '0.1.0')).toBe(true);
-    expect(isNewer('v0.10.0', '0.9.3')).toBe(true);
-    expect(isNewer('v1.0.0', '0.99.99')).toBe(true);
-    expect(isNewer('v0.1.0', '0.1.0')).toBe(false);
-    expect(isNewer('v0.1.0', '0.2.0')).toBe(false);
-  });
-
-  it('refuses a tag or a version in another form', () => {
-    expect(() => isNewer('release-2', '0.1.0')).toThrow('The release tag release-2 is not vMAJOR.MINOR.PATCH');
-    expect(() => isNewer('v0.2.0-beta', '0.1.0')).toThrow('The release tag v0.2.0-beta is not vMAJOR.MINOR.PATCH');
-    expect(() => isNewer('v0.2.0', 'latest')).toThrow('The version latest in package.json is not MAJOR.MINOR.PATCH');
-  });
-});
-
-describe('prepareUpdate', () => {
+describe('applyUpdate', () => {
   const dirs: string[] = [];
   afterEach(() => {
     for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
@@ -63,11 +47,10 @@ describe('prepareUpdate', () => {
     return { template, copy };
   }
 
-  it("makes a branch with the template's files at the tag, except .github/workflows/", () => {
+  it("commits the template's files at the tag on the copy's branch, except .github/workflows/", () => {
     const { template, copy } = setUp();
-    const update = prepareUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.2.0' });
-    expect(update?.branch).toBe('template-update/v0.2.0');
-    expect(git(copy, 'branch', '--show-current')).toBe('template-update/v0.2.0');
+    expect(applyUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.2.0' })).not.toBeNull();
+    expect(git(copy, 'branch', '--show-current')).toBe('main');
     expect(git(copy, 'ls-files').split('\n')).toEqual(['.github/workflows/deploy.yml', '.github/workflows/mine.yml', 'package.json', 'src/added.ts', 'src/app.ts']);
     expect(readFileSync(join(copy, 'src/app.ts'), 'utf8')).toBe('new');
     expect(readFileSync(join(copy, '.github/workflows/deploy.yml'), 'utf8')).toBe('deploy v1');
@@ -76,22 +59,34 @@ describe('prepareUpdate', () => {
     expect(git(copy, 'rev-list', '--count', 'HEAD')).toBe('2'); // one commit on top of the copy's main
   });
 
-  it('writes a pull request body that lists the workflow files to copy by hand', () => {
+  it('writes a run summary, and lists the workflow files to copy by hand', () => {
     const { template, copy } = setUp();
-    const { body } = prepareUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.2.0' })!;
-    expect(body).toContain('GitCRM v0.2.0 is out. This copy runs 0.1.0.');
-    expect(body).toContain('https://github.com/octo-dev/GitCRM/releases/tag/v0.2.0');
-    expect(body).toContain('- [.github/workflows/deploy.yml](https://github.com/octo-dev/GitCRM/blob/v0.2.0/.github/workflows/deploy.yml)');
-    expect(body).toContain('- [.github/workflows/new.yml](https://github.com/octo-dev/GitCRM/blob/v0.2.0/.github/workflows/new.yml)');
-    expect(body).not.toContain('mine.yml'); // the template does not have it, so there is nothing to copy
+    const { summary, workflows } = applyUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.2.0' })!;
+    expect(summary).toContain('This copy now runs GitCRM v0.2.0. It ran 0.1.0.');
+    expect(summary).toContain('https://github.com/octo-dev/GitCRM/releases/tag/v0.2.0');
+    expect(summary).toContain('- [.github/workflows/deploy.yml](https://github.com/octo-dev/GitCRM/blob/v0.2.0/.github/workflows/deploy.yml)');
+    expect(summary).toContain('- [.github/workflows/new.yml](https://github.com/octo-dev/GitCRM/blob/v0.2.0/.github/workflows/new.yml)');
+    expect(summary).not.toContain('mine.yml'); // the template does not have it, so there is nothing to copy
+    expect(workflows).toEqual(['.github/workflows/deploy.yml', '.github/workflows/new.yml']);
   });
 
   it('does nothing when the copy is as new as the release', () => {
     const { template, copy } = setUp();
     writeFileSync(join(copy, 'package.json'), version('0.2.0'));
     git(copy, 'commit', '-qam', 'already 0.2.0');
-    expect(prepareUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.2.0' })).toBeNull();
-    expect(git(copy, 'branch', '--show-current')).toBe('main');
+    expect(applyUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.2.0' })).toBeNull();
+    expect(git(copy, 'rev-list', '--count', 'HEAD')).toBe('2');
     expect(git(copy, 'tag')).toBe(''); // nothing fetched
+  });
+
+  // Otherwise the copy would report the old version, and offer the same update again.
+  it('refuses a release whose package.json has another version, and changes nothing', () => {
+    const { template, copy } = setUp();
+    git(template, 'tag', '-a', 'v0.3.0', '-m', 'v0.3.0');
+    expect(() => applyUpdate({ dir: copy, template: 'octo-dev/GitCRM', source: template, tag: 'v0.3.0' })).toThrow(
+      'The release v0.3.0 has version 0.2.0 in package.json. A release tag must be v<version>.',
+    );
+    expect(git(copy, 'rev-list', '--count', 'HEAD')).toBe('1');
+    expect(git(copy, 'status', '--porcelain')).toBe('');
   });
 });

@@ -13,7 +13,7 @@ As a GitHub user, I want GitCRM to connect only to a private repository that I c
 - The app checks the authenticated GitHub identity and selected repository metadata.
 - A repository must have `private = true`, be accessible with Contents read/write, and have a compatible writable `main` branch.
 - The data repository may be empty, with no commits. Connect then offers Initialize, and Initialize makes the first commit (ADR-025, S-09).
-- The connect screen helps create the data repository: a link opens GitHub's new-repository form, filled in as a private repository. On a GitHub Pages site, the owner and the name `gitcrm-data` are filled in from the site address.
+- The connect screen is three numbered steps: 1. create the data repository, 2. name it, 3. create and paste the token. Step 1 is the screen's most prominent control, a large button that opens GitHub's new-repository form, filled in as a private repository (owner decision 2026-11-01). On a GitHub Pages site, the owner and the name `gitcrm-data` are filled in from the site address.
 - If `.gitcrm/workspace.json` is missing, offer explicit initialization. If present, validate schema version and do not overwrite it.
 - Connected status shows owner/repo and a Disconnect control, but not the token value.
 
@@ -41,15 +41,15 @@ Scenario: The connect screen on my GitHub Pages site
   And this browser has no remembered repository
   When I open the connect screen
   Then Repository holds "octo-dev/gitcrm-data"
-  And "Create it on GitHub" opens github.com/new with name gitcrm-data, owner octo-dev, and visibility private
+  And the large button "Create your data repository" opens github.com/new with name gitcrm-data, owner octo-dev, and visibility private
 
 Scenario: The connect screen on another host
   Given GitCRM runs on a host that is not github.io
   When I open the connect screen
   Then Repository is empty
-  And "Create it on GitHub" opens github.com/new with name gitcrm-data, owner @me, and visibility private
+  And the large button "Create your data repository" opens github.com/new with name gitcrm-data, owner @me, and visibility private
   When I type octo-dev/crm-records
-  Then the link has name crm-records and owner octo-dev
+  Then the button's link has name crm-records and owner octo-dev
 
 Scenario: Open an existing workspace
   Given the selected private repo has a valid workspace config

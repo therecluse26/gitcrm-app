@@ -7,7 +7,7 @@ import { recordPath } from '../src/core/paths.ts';
 import { serializeRecord } from '../src/core/record-file.ts';
 import { expect, test, type Page } from './fixtures.ts';
 import { connect } from './connect-page.ts';
-import { routeFakeGitHub } from './fake-route.ts';
+import { PAGES_SITE, routeFakeGitHub, servePagesSite } from './fake-route.ts';
 import { activity, company, contact, exampleConfig, field, open, opportunity, status, task } from './workspace.ts';
 
 const acme = company('Acme Corp', { website: 'https://acme.example' });
@@ -151,6 +151,15 @@ test('the connect screen and workspace setup, with and without field errors', as
   await connect(page, fake);
   await expect(page.getByRole('heading', { name: 'Set up a GitCRM workspace' })).toBeVisible();
   await checkPage(page, 'workspace setup');
+});
+
+test('the update banner on the connect screen (spec 11)', async ({ page, baseURL }) => {
+  await routeFakeGitHub(page);
+  await page.route('https://api.github.com/repos/therecluse26/GitCRM/releases/latest', (route) => route.fulfill({ json: { tag_name: 'v99.0.0' } }));
+  await servePagesSite(page, baseURL!);
+  await page.goto(PAGES_SITE);
+  await expect(page.getByRole('link', { name: 'Update GitCRM' })).toBeVisible();
+  await checkPage(page, 'update banner');
 });
 
 test('a form with field errors, a failed save, and the conflict panel', async ({ page }) => {

@@ -128,6 +128,7 @@ describe('tokenLink', () => {
       description: expect.stringContaining('octo-dev/crm'),
       target_name: 'octo-dev',
       contents: 'write',
+      expires_in: '90', // owner decision 2026-11-01
     });
   });
 

@@ -25,11 +25,13 @@ You need a GitHub account and a browser. You need no command line, no server, an
 
 Your site is public, but your records are not: the app reads them only with your token. Search engines leave the site out (`noindex`). The workflow runs on your Actions minutes; a public repository runs it at no cost.
 
-Updates (ADR-026, spec 11): each Monday, the **Template update** workflow in your copy checks this template's latest release. When it is newer than your copy, the workflow pushes the branch `template-update/<tag>` and opens a pull request. Review it, then merge: the Deploy workflow deploys the new version.
+Updates (ADR-026, spec 11): when this template has a newer release, your site shows **GitCRM v… is available**.
 
-- GitHub does not let Actions open pull requests until you allow it: **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**. Without it, the workflow opens an issue with a link that creates the pull request.
-- The workflow cannot change files in `.github/workflows/`. The pull request lists each changed workflow file to copy by hand.
-- GitHub turns off a scheduled workflow after 60 days with no activity in a public repository. Run **Template update** by hand to turn it on again.
+1. Click **Update GitCRM**. GitHub opens your copy's **Template update** workflow.
+2. Click **Run workflow**, then the green **Run workflow** button.
+3. Reload your site in about 5 minutes.
+
+The workflow commits the release to `main`, then deploys it. To undo an update, revert its commit. The workflow cannot change files in `.github/workflows/`: when a release changes one, the run shows a warning, and its summary lists each file to copy by hand.
 
 To release a new version of the template: change `version` in `package.json` on `main`, then create a GitHub release with the tag `v<version>`.
 

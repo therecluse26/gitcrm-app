@@ -31,7 +31,7 @@
 17. A save keeps the custom field values that its form cannot show. Two users who change different custom fields of one record both keep their change (spec 10).
 18. A save from one Settings card keeps a loaded change from the other card. A loaded change to the card's own part is a conflict (spec 10, "Error handling").
 19. Connect to an empty data repo, with no commits, offers Initialize, and Initialize makes the repo's first commit (spec 01, S-09).
-20. A newer template release becomes one commit on `template-update/<tag>` with the template's files, except `.github/workflows/`, and the pull request lists the workflow files to copy by hand (spec 11).
+20. A newer template release shows the update banner on a copy's GitHub Pages site, with no token in the request. The update becomes one commit on `main` with the template's files, except `.github/workflows/`, and the run summary lists the workflow files to copy by hand (spec 11).
 
 ## Failure paths
 
