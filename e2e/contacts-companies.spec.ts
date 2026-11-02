@@ -102,10 +102,10 @@ test('archive hides a contact until "Show archived" is on, and restore keeps its
   expect(fileOf(fake, ava).archivedAt).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
 
   await go(page, 'Contacts');
-  await expect(page.getByRole('list', { name: 'Contacts' }).getByRole('link')).toHaveText(['Ben Carter']);
+  await expect(page.getByRole('table', { name: 'Contacts' }).getByRole('link')).toHaveText(['Ben Carter']);
   await expect(page.getByText('1 contact. 1 archived contact hidden.')).toBeVisible();
   await page.getByRole('checkbox', { name: 'Show archived' }).click();
-  await page.getByRole('list', { name: 'Contacts' }).getByRole('link', { name: 'Ava Bennett' }).click();
+  await page.getByRole('table', { name: 'Contacts' }).getByRole('link', { name: 'Ava Bennett' }).click();
   await page.getByRole('button', { name: 'Restore' }).click();
 
   await expect(page.getByRole('button', { name: 'Archive' })).toBeVisible();
@@ -237,7 +237,7 @@ test('searches and sorts the contact list', async ({ page }) => {
     contact('Carla Diaz', { companyId: northwind.id, updatedAt: '2026-10-02T00:00:00Z' }),
   ]);
   await go(page, 'Contacts');
-  const names = page.getByRole('list', { name: 'Contacts' }).getByRole('link');
+  const names = page.getByRole('table', { name: 'Contacts' }).getByRole('link');
   await expect(names).toHaveText(['Ava Bennett', 'Ben Carter', 'Carla Diaz']);
 
   await field(page, 'Search contacts').fill('north');

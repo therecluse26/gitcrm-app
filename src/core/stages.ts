@@ -13,6 +13,16 @@ export function sortStages(stages: Stage[]): Stage[] {
   return renumber(stages.toSorted((a, b) => a.position - b.position));
 }
 
+export type StageTone = 1 | 2 | 3 | 4 | 'won' | 'lost' | 'unknown';
+
+// The colour of a stage's mark (spec 12): open stages take tones 1 to 4 in pipeline order, then
+// start again.
+export function stageTone(stages: Stage[], id: string): StageTone {
+  if (id === 'won' || id === 'lost') return id;
+  const index = sortStages(stages).filter((s) => !isTerminal(s.id)).findIndex((s) => s.id === id);
+  return index === -1 ? 'unknown' : ((index % 4) + 1) as StageTone;
+}
+
 // "Quote sent" -> "quote-sent", or "quote-sent-2" when that is taken (docs/02). Stage, custom
 // field, and option IDs all come from here. The base stops at 56 characters, so a number still
 // fits in the 64-character limit.

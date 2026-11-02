@@ -41,7 +41,7 @@ test('after a link, a save, or Back, focus is on the main heading, and the scrol
 
   await go(page, 'Contacts');
   await expect(heading(page, 'Contacts')).toBeFocused();
-  await page.getByRole('list', { name: 'Contacts' }).getByRole('link', { name: 'Ava Bennett' }).click();
+  await page.getByRole('table', { name: 'Contacts' }).getByRole('link', { name: 'Ava Bennett' }).click();
   await expect(heading(page, 'Ava Bennett')).toBeFocused();
 
   const lastTask = page.getByRole('list', { name: 'Tasks for Ava Bennett' }).getByRole('link').last();
@@ -185,27 +185,29 @@ const numbered = <R,>(count: number, make: (n: string) => R) => Array.from({ len
 const listStatus = (page: Page) => page.getByRole('main').getByRole('status');
 const pages = (page: Page, label: string) => page.getByRole('navigation', { name: `${label} pages` });
 const rows = (page: Page, name: string) => page.getByRole('list', { name, exact: true }).getByRole('listitem');
+// The body rows of a table, without its header row.
+const tableRows = (page: Page, name: string) => page.getByRole('table', { name, exact: true }).locator('tbody > tr');
 
 test('a long list comes in pages of 50, and Next and Previous move focus to the list', async ({ page }) => {
   await open(page, numbered(120, (n) => contact(`Contact ${n}`)));
   await go(page, 'Contacts');
-  const list = page.getByRole('list', { name: 'Contacts' });
+  const list = page.getByRole('table', { name: 'Contacts' });
   const next = pages(page, 'Contacts').getByRole('button', { name: 'Next page' });
   const previous = pages(page, 'Contacts').getByRole('button', { name: 'Previous page' });
-  await expect(rows(page, 'Contacts')).toHaveCount(50);
-  await expect(rows(page, 'Contacts').first()).toContainText('Contact 001');
+  await expect(tableRows(page, 'Contacts')).toHaveCount(50);
+  await expect(tableRows(page, 'Contacts').first()).toContainText('Contact 001');
   await expect(listStatus(page)).toHaveText('Showing 1–50 of 120 contacts');
   await expect(previous).toBeDisabled();
 
   await next.click();
-  await expect(rows(page, 'Contacts').first()).toContainText('Contact 051');
+  await expect(tableRows(page, 'Contacts').first()).toContainText('Contact 051');
   await expect(list).toBeFocused();
-  await expect(rows(page, 'Contacts').first()).toBeInViewport();
+  await expect(tableRows(page, 'Contacts').first()).toBeInViewport();
   await expect(pages(page, 'Contacts')).toContainText('Page 2 of 3');
 
   await next.click();
   await expect(listStatus(page)).toHaveText('Showing 101–120 of 120 contacts');
-  await expect(rows(page, 'Contacts')).toHaveCount(20);
+  await expect(tableRows(page, 'Contacts')).toHaveCount(20);
   await expect(next).toBeDisabled();
   await previous.click();
   await expect(listStatus(page)).toHaveText('Showing 51–100 of 120 contacts');
@@ -247,7 +249,7 @@ test('when the last page loses its only row, the list shows the new last page', 
 test('a short list shows every row and has no page buttons', async ({ page }) => {
   await open(page, numbered(12, (n) => contact(`Contact ${n}`)));
   await go(page, 'Contacts');
-  await expect(rows(page, 'Contacts')).toHaveCount(12);
+  await expect(tableRows(page, 'Contacts')).toHaveCount(12);
   await expect(listStatus(page)).toHaveText('12 contacts');
   await expect(pages(page, 'Contacts')).toHaveCount(0);
 });
@@ -273,14 +275,14 @@ test('Companies, the Pipeline list and columns, Search after "Show all", and rec
     ...numbered(51, (n) => activity(`Note ${n}`, { related })),
   ]);
   // Each list shows 50 rows, and its Next page shows the 51st.
-  async function check(list: string, label = list) {
-    await expect(rows(page, list)).toHaveCount(50);
+  async function check(list: string, label = list, shown = rows) {
+    await expect(shown(page, list)).toHaveCount(50);
     await pages(page, label).getByRole('button', { name: 'Next page' }).click();
-    await expect(rows(page, list)).toHaveCount(1);
+    await expect(shown(page, list)).toHaveCount(1);
   }
 
   await go(page, 'Companies');
-  await check('Companies');
+  await check('Companies', 'Companies', tableRows);
 
   await go(page, 'Pipeline');
   await check('Lead');

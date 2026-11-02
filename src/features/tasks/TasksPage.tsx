@@ -59,7 +59,7 @@ export function TasksPage() {
         {groups.map((group) => (
           <section key={group.name} aria-labelledby={`tasks-${group.name}`} className="flex flex-col gap-1">
             <h2 id={`tasks-${group.name}`} className="text-lg font-medium">{group.name}</h2>
-            <ul className="flex flex-col divide-y">
+            <ul className="flex flex-col divide-y rounded-md border [&>li]:px-3">
               {group.tasks.map((task) => (
                 <TaskItem key={task.id} saved={versions.get(task.id)!} today={today} pending={completion.pending === task.id} onToggle={completion.toggle} showRelated />
               ))}

@@ -12,12 +12,14 @@ import { formatMoney } from '@/core/money.ts';
 import type { Opportunity } from '@/core/schemas.ts';
 import { isTerminal, type Stage } from '@/core/stages.ts';
 import type { VersionedRecord } from '@/storage/workspace-repository.ts';
+import { table as tableStyle, tableBox, td, th } from '@/ui/data-table.ts';
 import { selectClassName } from '@/ui/form-fields.tsx';
 import { linkButton } from '@/ui/link-button.ts';
 import { ArchivedBadge, ListSummary, Pager, Problem } from '@/ui/record-page.tsx';
 import { onePage } from '../list-page.ts';
 import { formatCalendarDate, useRecords, useStages } from '../records.ts';
 import { pipelineColumns, stageName, type PipelineColumn } from './pipeline.ts';
+import { StageMark } from './StageMark.tsx';
 import { useStageMove } from './use-stage-move.ts';
 
 // Only GitCRM's own columns accept the drag, and the drag carries an ID, never record data.
@@ -148,7 +150,10 @@ function Column({ column, shared }: { column: PipelineColumn; shared: Shared }) 
       }}
     >
       <div className="flex items-baseline justify-between gap-2 px-1">
-        <h2 id={headingId} className="font-medium break-words">{stage?.label ?? 'Unknown stage'}</h2>
+        <h2 id={headingId} className="flex items-center gap-2 font-medium break-words">
+          <StageMark stages={shared.stages} id={stage?.id ?? ''} />
+          {stage?.label ?? 'Unknown stage'}
+        </h2>
         <span className="text-sm text-muted-foreground">
           {closed && 'Closed · '}
           {opportunities.length}
@@ -223,16 +228,13 @@ function StageMenu({ opportunity, saved, stages, onMove }: Pick<ItemProps, 'oppo
 function OpportunityTable({ rows, table, shared }: { rows: Opportunity[]; table: RefObject<HTMLTableElement | null>; shared: Shared }) {
   if (rows.length === 0) return null;
   return (
-    <div className="overflow-x-auto">
-      <table ref={table} tabIndex={-1} aria-label="Opportunities" className="w-full text-left text-sm outline-none">
-        <thead className="text-muted-foreground">
-          <tr className="border-b">
-            <th className="p-2 font-medium">Opportunity</th>
-            <th className="p-2 font-medium">Stage</th>
-            <th className="p-2 font-medium">Value</th>
-            <th className="p-2 font-medium">Company</th>
-            <th className="p-2 font-medium">Contacts</th>
-            <th className="p-2 font-medium">Expected close</th>
+    <div className={tableBox}>
+      <table ref={table} tabIndex={-1} aria-label="Opportunities" className={tableStyle}>
+        <thead>
+          <tr>
+            {['Opportunity', 'Stage', 'Value', 'Company', 'Contacts', 'Expected close'].map((name) => (
+              <th key={name} className={th}>{name}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -255,8 +257,8 @@ function OpportunityTable({ rows, table, shared }: { rows: Opportunity[]; table:
 
 const OpportunityRow = memo(function OpportunityRow({ opportunity, saved, names, stages, pending, onMove }: ItemProps) {
   return (
-    <tr className="border-b align-top">
-      <td className="p-2">
+    <tr>
+      <td className={td}>
         <span className="flex flex-wrap items-center gap-2">
           <Link to="/opportunities/$opportunityId" params={{ opportunityId: opportunity.id }} className="font-medium hover:underline">
             {opportunity.title}
@@ -265,13 +267,16 @@ const OpportunityRow = memo(function OpportunityRow({ opportunity, saved, names,
           {pending && <span role="status">Moving…</span>}
         </span>
       </td>
-      <td className="min-w-40 p-2">
-        <StageMenu opportunity={opportunity} saved={saved} stages={stages} onMove={onMove} />
+      <td className={`${td} min-w-48 py-1`}>
+        <span className="flex items-center gap-2">
+          <StageMark stages={stages} id={opportunity.stageId} />
+          <StageMenu opportunity={opportunity} saved={saved} stages={stages} onMove={onMove} />
+        </span>
       </td>
-      <td className="p-2 whitespace-nowrap">{opportunity.valueMinor !== null ? formatMoney(opportunity.valueMinor, opportunity.currency) : ''}</td>
-      <td className="p-2">{names.company(opportunity.companyId)}</td>
-      <td className="p-2">{names.contacts(opportunity.contactIds)}</td>
-      <td className="p-2 whitespace-nowrap">{opportunity.expectedCloseDate ? formatCalendarDate(opportunity.expectedCloseDate) : ''}</td>
+      <td className={`${td} text-right whitespace-nowrap tabular-nums`}>{opportunity.valueMinor !== null ? formatMoney(opportunity.valueMinor, opportunity.currency) : ''}</td>
+      <td className={td}>{names.company(opportunity.companyId)}</td>
+      <td className={td}>{names.contacts(opportunity.contactIds)}</td>
+      <td className={`${td} whitespace-nowrap`}>{opportunity.expectedCloseDate ? formatCalendarDate(opportunity.expectedCloseDate) : ''}</td>
     </tr>
   );
 });

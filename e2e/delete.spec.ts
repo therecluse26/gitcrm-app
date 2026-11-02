@@ -36,7 +36,7 @@ test('the delete page lists every change, and one commit deletes the contact, it
   const commits = fake.commitCount();
   await deleteButton(page, 'contact').click();
   await expect(page.getByRole('heading', { level: 1, name: 'Contacts' })).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Contacts' }).getByRole('link')).toHaveText(['Ben Carter']);
+  await expect(page.getByRole('table', { name: 'Contacts' }).getByRole('link')).toHaveText(['Ben Carter']);
   await expect(status(page)).toContainText('Deleted');
   await expect(status(page).getByRole('link', { name: 'View commit' })).toHaveAttribute('href', new RegExp(`/commit/${fake.head}$`));
   expect(fake.commitCount()).toBe(commits + 1);

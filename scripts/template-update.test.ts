@@ -1,9 +1,16 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { applyUpdate } from './template-update.ts';
+import { applyUpdate, errorAnnotation } from './template-update.ts';
+
+describe('errorAnnotation', () => {
+  it('keeps a message of several lines in one annotation', () => {
+    expect(errorAnnotation(new Error('Command failed: git fetch\nfatal: 100% gone\r\n'))).toBe('::error::Command failed: git fetch%0Afatal: 100%25 gone');
+  });
+});
 
 describe('applyUpdate', () => {
   const dirs: string[] = [];
@@ -88,5 +95,20 @@ describe('applyUpdate', () => {
     );
     expect(git(copy, 'rev-list', '--count', 'HEAD')).toBe('1');
     expect(git(copy, 'status', '--porcelain')).toBe('');
+  });
+
+  // The workflow shows a failure as one annotation, not as a Node stack trace.
+  it('as a command, prints a failure as one GitHub error annotation, and exits with 1', () => {
+    const { template, copy } = setUp();
+    git(template, 'tag', '-a', 'v0.3.0', '-m', 'v0.3.0');
+    const run = spawnSync(process.execPath, [fileURLToPath(new URL('./template-update.ts', import.meta.url)), 'octo-dev/GitCRM', 'v0.3.0', copy], {
+      cwd: copy,
+      encoding: 'utf8',
+      // git fetches the template from the local folder instead of github.com.
+      env: { ...process.env, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: `url.${template}.insteadOf`, GIT_CONFIG_VALUE_0: 'https://github.com/octo-dev/GitCRM.git' },
+    });
+    expect(run.status).toBe(1);
+    expect(run.stdout).toBe('::error::The release v0.3.0 has version 0.2.0 in package.json. A release tag must be v<version>.\n');
+    expect(run.stderr).not.toContain('at applyUpdate');
   });
 });

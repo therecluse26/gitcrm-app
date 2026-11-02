@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addStage, moveStage, removeStage, renameStage, sortStages, stageIdFor, stageLabelErrors, type Stage } from './stages.ts';
+import { addStage, moveStage, removeStage, renameStage, sortStages, stageIdFor, stageLabelErrors, stageTone, type Stage } from './stages.ts';
 import { newWorkspaceConfig } from './workspace.ts';
 
 const defaults = newWorkspaceConfig({ name: 'W', defaultCurrency: 'USD' }).pipelineStages;
@@ -85,5 +85,25 @@ describe('stageLabelErrors', () => {
 
   it('accepts the defaults', () => {
     expect(stageLabelErrors(defaults)).toEqual({});
+  });
+});
+
+describe('stageTone', () => {
+  it('gives open stages tones 1 to 4 in pipeline order, then starts again', () => {
+    const stages = [...'abcdef'].map((id, position) => ({ id, label: id, position })).concat([{ id: 'won', label: 'Won', position: 6 }, { id: 'lost', label: 'Lost', position: 7 }]);
+    expect(stages.map((s) => stageTone(stages, s.id))).toEqual([1, 2, 3, 4, 1, 2, 'won', 'lost']);
+  });
+
+  it('follows the position, not the order of the list', () => {
+    const stages = [
+      { id: 'proposal', label: 'Proposal', position: 2 },
+      { id: 'lead', label: 'Lead', position: 0 },
+      { id: 'qualified', label: 'Qualified', position: 1 },
+    ];
+    expect(['lead', 'qualified', 'proposal'].map((id) => stageTone(stages, id))).toEqual([1, 2, 3]);
+  });
+
+  it('marks a stage that the settings do not have as unknown', () => {
+    expect(stageTone(defaults, 'gone')).toBe('unknown');
   });
 });

@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { assessRepository, describeConnectError, inspectRepository, type Access } from '../auth/connect.ts';
 import { forgetConnection, readSavedConnection, saveConnection, type SavedConnection } from '../auth/credentials.ts';
+import { applyTheme, forgetTheme, storedTheme, storeTheme, type Theme } from './theme.ts';
 import { WORKSPACE_PATH } from '../core/paths.ts';
 import { serializeRecord, serializeWorkspace } from '../core/record-file.ts';
 import type { CRMRecord, WorkspaceConfig } from '../core/schemas.ts';
@@ -57,6 +58,7 @@ export type AppState = {
   pipeline: PipelineView;
   tasks: TaskView;
   search: SearchView;
+  theme: Theme;
   start(): Promise<void>;
   connect(credentials: Credentials): Promise<void>;
   refresh(): Promise<void>;
@@ -71,6 +73,8 @@ export type AppState = {
   setPipelineView(changes: Partial<PipelineView>): void;
   setTaskView(changes: Partial<TaskView>): void;
   setSearchView(changes: Partial<SearchView>): void;
+  // Applies at once; stored on this device only while the connection is remembered (spec 12).
+  setTheme(theme: Theme): void;
   tabFocused(): void;
   disconnect(): Promise<void>;
 };
@@ -219,6 +223,9 @@ export const useApp = create<AppState>()((set, get) => {
   // Forgets the token in memory too. The stored token and the cache are already gone.
   function signOut() {
     api = null;
+    forgetTheme();
+    applyTheme('dark');
+    set({ theme: 'dark' });
     leave({ credentials: null, repoName: '', screen: { name: 'connect', problem: null, busy: false } });
   }
 
@@ -229,6 +236,7 @@ export const useApp = create<AppState>()((set, get) => {
     if (from === 'connect' || tokenRejected) {
       if (tokenRejected) {
         forgetConnection();
+        forgetTheme();
         api = null;
       }
       leave({ credentials: null, screen: { name: 'connect', problem, busy: false } });
@@ -246,6 +254,7 @@ export const useApp = create<AppState>()((set, get) => {
     repoName: '',
     credentials: null,
     ...cleared,
+    theme: storedTheme(),
 
     async start() {
       if (started) return;
@@ -272,10 +281,14 @@ export const useApp = create<AppState>()((set, get) => {
         if (!credentials.remember) {
           // A shared computer: store nothing in this browser.
           forgetConnection();
+          forgetTheme();
           await cache.clear();
         }
         await establish(credentials, credentials.remember ? await cache.read(cacheKey(credentials)) : null);
-        if (credentials.remember) saveConnection({ owner: credentials.owner, repo: credentials.repo, token: credentials.token });
+        if (credentials.remember) {
+          saveConnection({ owner: credentials.owner, repo: credentials.repo, token: credentials.token });
+          storeTheme(get().theme);
+        }
       } catch (error) {
         fail(error, 'connect');
       }
@@ -345,6 +358,12 @@ export const useApp = create<AppState>()((set, get) => {
 
     setSearchView(changes) {
       set({ search: changeView(get().search, changes) });
+    },
+
+    setTheme(theme) {
+      applyTheme(theme);
+      set({ theme });
+      if (get().credentials?.remember) storeTheme(theme);
     },
 
     tabFocused() {

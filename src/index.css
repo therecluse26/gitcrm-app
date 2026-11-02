@@ -1,14 +1,52 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./styles/shadcn-tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/ibm-plex-sans";
 
 @custom-variant dark (&:is(.dark *));
 
+/* IBM Plex Mono, for repository names and commit SHAs (spec 12). Declared here rather than imported
+   from its package, whose CSS also adds .woff files: the build allows only .woff2 (docs/07). Latin
+   and Latin Extended; other scripts use the system's monospace font. */
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url(../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-400-normal.woff2) format('woff2');
+    unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url(../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2) format('woff2');
+    unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'IBM Plex Sans Variable', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    /* A smaller type scale (spec 12). text-base stays 16 px, so a phone does not zoom into a field. */
+    --text-sm: 0.8125rem;
+    --text-sm--line-height: 1.25rem;
+    --text-lg: 0.9375rem;
+    --text-lg--line-height: 1.375rem;
+    --text-xl: 1rem;
+    --text-xl--line-height: 1.5rem;
+    --text-2xl: 1.125rem;
+    --text-2xl--line-height: 1.625rem;
+    --text-3xl: 1.375rem;
+    --text-3xl--line-height: 1.75rem;
     --color-sidebar-ring: var(--sidebar-ring);
+    --color-stage-1: var(--stage-1);
+    --color-stage-2: var(--stage-2);
+    --color-stage-3: var(--stage-3);
+    --color-stage-4: var(--stage-4);
+    --color-stage-won: var(--stage-won);
+    --color-stage-lost: var(--stage-lost);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-accent: var(--sidebar-accent);
@@ -48,83 +86,100 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Three tokens are darker than the shadcn defaults, to meet WCAG 2.2 AA (docs/08, "Accessibility
-   checks"): --destructive, --input (field borders), and --ring (focus rings). */
+/* Spec 12: option C, "Dense and data-first". Light is :root; dark is the default, set by the
+   `dark` class on <html> (src/app/theme.ts). Every pair of text and background reaches WCAG 2.2 AA;
+   --input (field borders) and --ring (focus rings) reach 3:1 against each background (docs/08). */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.505 0.213 27.518);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.62 0 0);
-    --ring: oklch(0.205 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #111827;
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+    --primary: #0f766e;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f3f5;
+    --secondary-foreground: #111827;
+    --muted: #f1f3f5;
+    --muted-foreground: #4b5563;
+    --accent: #f1f3f5;
+    --accent-foreground: #111827;
+    --destructive: #b91c1c;
+    --border: #e3e6ea;
+    --input: #6b7280;
+    --ring: #0f766e;
+    --chart-1: #0f766e;
+    --chart-2: #2563eb;
+    --chart-3: #7c3aed;
+    --chart-4: #d97706;
+    --chart-5: #6b7280;
+    --radius: 0.25rem;
+    /* The top bar. */
+    --sidebar: #f8f9fa;
+    --sidebar-foreground: #111827;
+    --sidebar-primary: #0f766e;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f1f3f5;
+    --sidebar-accent-foreground: #111827;
+    --sidebar-border: #e3e6ea;
+    --sidebar-ring: #0f766e;
+    /* Stage marks (spec 12): each reaches 3:1 on --background. */
+    --stage-1: #d97706;
+    --stage-2: #2563eb;
+    --stage-3: #7c3aed;
+    --stage-4: #0891b2;
+    --stage-won: #15803d;
+    --stage-lost: #6b7280;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    color-scheme: dark;
+    --background: #0b0e11;
+    --foreground: #e5e7eb;
+    --card: #11161b;
+    --card-foreground: #e5e7eb;
+    --popover: #11161b;
+    --popover-foreground: #e5e7eb;
+    --primary: #0f766e;
+    --primary-foreground: #ffffff;
+    --secondary: #1a2129;
+    --secondary-foreground: #e5e7eb;
+    --muted: #1a2129;
+    --muted-foreground: #9ca3af;
+    --accent: #1a2129;
+    --accent-foreground: #e5e7eb;
+    --destructive: #f87171;
+    --border: #232a33;
+    --input: #6b7280;
+    --ring: #2dd4bf;
+    --chart-1: #2dd4bf;
+    --chart-2: #60a5fa;
+    --chart-3: #a78bfa;
+    --chart-4: #fbbf24;
+    --chart-5: #9ca3af;
+    --sidebar: #11161b;
+    --sidebar-foreground: #e5e7eb;
+    --sidebar-primary: #2dd4bf;
+    --sidebar-primary-foreground: #0b0e11;
+    --sidebar-accent: #1a2129;
+    --sidebar-accent-foreground: #e5e7eb;
+    --sidebar-border: #232a33;
+    --sidebar-ring: #2dd4bf;
+    --stage-1: #fbbf24;
+    --stage-2: #60a5fa;
+    --stage-3: #a78bfa;
+    --stage-4: #22d3ee;
+    --stage-won: #4ade80;
+    --stage-lost: #9ca3af;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-sm text-foreground;
     }
   html {
     @apply font-sans;

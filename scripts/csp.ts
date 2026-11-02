@@ -5,7 +5,7 @@ export const CSP_DIRECTIVES: [directive: string, value: string][] = [
   ['default-src', "'none'"], // anything not listed here: frames, workers, objects, media, images
   ['script-src', "'self'"], // the app's own bundle only: no inline script, no eval
   ['style-src', "'self'"],
-  ['font-src', "'self'"], // the Geist font files in the build
+  ['font-src', "'self'"], // the bundled IBM Plex font files
   ['connect-src', 'https://api.github.com'], // the PAT and CRM data can reach no other site
   ['base-uri', "'none'"], // a planted <base> tag cannot move the relative asset paths
   ['form-action', "'none'"], // forms never submit natively; the app handles them in script

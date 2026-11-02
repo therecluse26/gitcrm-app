@@ -13,7 +13,7 @@ const REF = /\/git\/ref\/heads\//;
 const checks = (fake: FakeGitHub) => fake.count('GET', REF);
 // What the browser sends when the user comes back to the tab.
 const focus = (page: Page) => page.evaluate(() => window.dispatchEvent(new Event('focus')));
-const contactNames = (page: Page) => page.getByRole('list', { name: 'Contacts' }).getByRole('link');
+const contactNames = (page: Page) => page.getByRole('table', { name: 'Contacts' }).getByRole('link');
 const refresh = (page: Page) => page.getByRole('button', { name: 'Refresh' }).click();
 const pausedNotice = (page: Page) => page.getByText('Automatic checks for changes are paused');
 const slowDown = (page: Page) => page.getByText('GitHub asked GitCRM to slow down. Try again in 1 min.');

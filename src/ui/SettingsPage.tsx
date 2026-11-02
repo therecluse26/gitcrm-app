@@ -1,8 +1,9 @@
-// Settings (docs/08): workspace, pipeline stages, custom fields, connection health, files that need
-// attention, export, and Disconnect.
+// Settings (docs/08): workspace, appearance, pipeline stages, custom fields, connection health, files
+// that need attention, export, and Disconnect.
 import { useNavigate } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 import { useApp } from '@/app/store.ts';
+import type { Theme } from '@/app/theme.ts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CustomFieldEditor } from '@/features/custom-fields/CustomFieldEditor.tsx';
@@ -23,6 +24,7 @@ export function SettingsPage() {
   const repoName = useApp((s) => s.repoName);
   const session = useApp((s) => s.session);
   const remember = useApp((s) => s.credentials?.remember ?? false);
+  const theme = useApp((s) => s.theme);
   const snapshot = useApp((s) => s.snapshot);
   const [confirming, setConfirming] = useState(false);
   const config = snapshot?.workspace?.config;
@@ -47,6 +49,26 @@ export function SettingsPage() {
             <Row label="Name">{config?.name}</Row>
             <Row label="Default currency">{config?.defaultCurrency}</Row>
           </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h2>Appearance</h2>
+          </CardTitle>
+          <CardDescription>{remember ? 'Stored in this browser until you disconnect.' : 'Kept until the page reloads, because this browser stores nothing.'}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <fieldset className="flex flex-wrap gap-x-6 gap-y-2">
+            <legend className="mb-2 font-medium">Theme</legend>
+            {(['dark', 'light'] as const satisfies Theme[]).map((option) => (
+              <label key={option} className="flex min-h-6 items-center gap-2">
+                <input type="radio" name="theme" value={option} checked={theme === option} onChange={() => useApp.getState().setTheme(option)} className="size-4 accent-primary" />
+                {option === 'dark' ? 'Dark' : 'Light'}
+              </label>
+            ))}
+          </fieldset>
         </CardContent>
       </Card>
 
@@ -104,7 +126,7 @@ export function SettingsPage() {
             <h2>Disconnect</h2>
           </CardTitle>
           <CardDescription>
-            Disconnect deletes the token and the saved records from this browser. Your repository does not change. To stop the token working everywhere, delete it on{' '}
+            Disconnect deletes the token, the saved records, and the theme choice from this browser. Your repository does not change. To stop the token working everywhere, delete it on{' '}
             <a className="underline" href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noopener noreferrer">GitHub's token page</a>.
           </CardDescription>
         </CardHeader>

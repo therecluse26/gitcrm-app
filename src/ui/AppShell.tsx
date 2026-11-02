@@ -20,7 +20,6 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const repoName = useApp((s) => s.repoName);
-  const workspaceName = useApp((s) => s.snapshot?.workspace?.config.name);
   const access = useApp((s) => s.session?.access);
   const sync = useApp((s) => s.sync);
   const saving = useApp((s) => s.saving);
@@ -61,13 +60,26 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Button variant="outline" size="lg" className="absolute -top-16 left-2 z-10 shadow-md transition-none focus-visible:top-2" onClick={() => main.current?.focus()}>
         Skip to main content
       </Button>
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-3">
-        <span className="font-semibold">GitCRM</span>
-        <span className="text-muted-foreground">{workspaceName}</span>
-        <div className="ml-auto flex flex-wrap items-center gap-2 text-sm">
-          <span className="flex items-center gap-1" title="Private GitHub repository">
-            <Lock className="size-3.5" aria-hidden />
-            <span>Connected to {repoName}</span>
+      {/* One top bar (spec 12): the main navigation as tabs, then the repository and sync status. */}
+      <header className="flex flex-wrap items-center gap-x-5 border-b bg-sidebar px-4">
+        <span className="py-2 font-mono text-sm font-medium">GitCRM</span>
+        <nav aria-label="Main" className="flex flex-wrap self-stretch">
+          {NAV.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className="flex min-h-11 items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+              activeProps={{ className: 'font-medium text-foreground shadow-[inset_0_-2px_0_var(--sidebar-primary)]' }}
+              activeOptions={{ exact: to === '/' }}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
+          <span className="flex items-center gap-1 text-muted-foreground" title="Private GitHub repository">
+            <Lock className="size-3" aria-hidden />
+            <span className="font-mono">{repoName}</span>
           </span>
           {access?.kind === 'read-only' && <Badge variant="secondary">Read-only</Badge>}
           <span role="status" className="text-muted-foreground">
@@ -97,32 +109,23 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
         </div>
       </header>
-      <div className="flex flex-1 flex-col md:flex-row">
-        <nav aria-label="Main" className="flex flex-wrap gap-1 border-b p-2 md:w-48 md:flex-col md:flex-nowrap md:border-r md:border-b-0">
-          {NAV.map(({ to, label }) => (
-            <Link key={to} to={to} className="rounded-md px-3 py-1.5 text-sm hover:bg-muted" activeProps={{ className: 'bg-muted font-medium' }} activeOptions={{ exact: to === '/' }}>
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <main ref={main} tabIndex={-1} className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
-          <UpdateBanner />
-          {'message' in sync && (
-            <Alert role="alert">
-              <AlertDescription>{sync.message} GitCRM is showing the records it has, read-only, until a refresh succeeds.</AlertDescription>
-            </Alert>
-          )}
-          {access?.kind === 'read-only' && (
-            <Alert>
-              <AlertDescription>{access.message}</AlertDescription>
-            </Alert>
-          )}
-          {checksPaused && (
-            <p className="text-sm text-muted-foreground">Automatic checks for changes are paused: fewer than 500 GitHub requests are left this hour. Refresh still works.</p>
-          )}
-          {children}
-        </main>
-      </div>
+      <main ref={main} tabIndex={-1} className="flex min-w-0 flex-1 flex-col gap-4 p-4">
+        <UpdateBanner />
+        {'message' in sync && (
+          <Alert role="alert">
+            <AlertDescription>{sync.message} GitCRM is showing the records it has, read-only, until a refresh succeeds.</AlertDescription>
+          </Alert>
+        )}
+        {access?.kind === 'read-only' && (
+          <Alert>
+            <AlertDescription>{access.message}</AlertDescription>
+          </Alert>
+        )}
+        {checksPaused && (
+          <p className="text-sm text-muted-foreground">Automatic checks for changes are paused: fewer than 500 GitHub requests are left this hour. Refresh still works.</p>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

@@ -38,7 +38,7 @@ Build in **small vertical slices**. The first meaningful release must prove the 
 - [x] Tasks and manual activities with relational display. Includes complete and reopen, archive and restore, task and activity cards on contact, company, and opportunity pages, and tasks due and recent activity on Home. Delete stays in Phase 3.
 - [x] Responsive navigation, save feedback, and validation UX (spec 08). Includes the skip link, focus on the page heading after a page change, a page for unknown addresses, a form message while another save runs, and field errors on the connect and setup screens.
 
-**Exit:** full "company -> contact -> opportunity -> note -> follow-up task" user journey works. Met on 2026-10-29 against the fake GitHub (`e2e/journey.spec.ts`). Still to do: a manual run against a disposable private repo.
+**Exit:** full "company -> contact -> opportunity -> note -> follow-up task" user journey works. Met on 2026-10-29 against the fake GitHub (`e2e/journey.spec.ts`). On 2026-11-01 the owner's real data repo saved its first record, a company. Still to do: the rest of the journey against a real private repo.
 
 ## Phase 3 - portability and hardening
 
@@ -64,8 +64,18 @@ Owner decision 2026-10-31, after the first run against a real repository (ADR-02
 - [x] 1. Distribution. Each copy of the template deploys to its own GitHub Pages site with no secrets (spec 09). The central copy, its Cloudflare deploy, and `deploy/` are removed. The README is the setup guide.
 - [x] 2. The setup screen (spec 01). On `<owner>.github.io`, Repository starts as `<owner>/gitcrm-data`. A link opens a pre-filled, private `github.com/new` form, then the token link follows. An empty data repository loads as an empty snapshot, and Initialize makes its first commit: Connect treats the `409` "Git Repository is empty." as an empty repository (S-09).
 - [x] 3. Template updates (spec 11). `.github/workflows/template-update.yml` runs each Monday and by hand. For a newer release it pushes `template-update/<tag>` with the template's files, except `.github/workflows/`, and opens a pull request, or an issue when Actions may not open one. The copy's history is unrelated to the template's, so the update compares files, not commits. The template must be public for copies to read its releases.
-- [ ] 4. A manual run on the owner's own copy, from "Use this template" to the first record.
+- [x] 4. A manual run on the owner's own copy, from "Use this template" to the first record. Done on 2026-11-01 (docs/12, S-09 "Live run"). The owner found no rough spots.
 - [x] 5. The update button (spec 11, owner decision 2026-11-01). On a copy's GitHub Pages site, the app reads the template's latest release with no token. When it is newer, a banner shows **Update GitCRM**, which opens the copy's Template update workflow. The workflow now runs only by hand, commits the release to `main`, and starts Deploy. No pull request, no schedule. A release whose `package.json` has another version is refused.
+
+### Styling and CRM features
+
+Owner request 2026-11-02: the app needs styling, and standard CRM features.
+
+- [x] 1. Visual style, first slice (spec 12, ADR-027). Option C, "Dense and data-first", from three mock-ups. New theme tokens, IBM Plex fonts, a smaller type scale, one top bar with tabs. Dark by default; Settings, Appearance offers Light. Every page passes the accessibility checks in both themes.
+- [x] 2. Visual style, second slice (spec 12). Contacts and Companies are dense tables with a column per field; the Pipeline list uses the same style. Each stage has a coloured mark next to its name. Task groups sit in boxes; they stay lists, because the same row shows on Home and on record pages.
+- [ ] 3. More built-in contact fields.
+- [ ] 4. List sort and filter by any field.
+- [ ] 5. A public lead form. Needs an owner decision first: a browser cannot write to a private repo without a token (ADR-004).
 
 ## Future considerations (not promises)
 

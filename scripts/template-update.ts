@@ -45,12 +45,24 @@ export function applyUpdate({ dir, template, source, tag }: { dir: string; templ
   return { summary: `${lines.join('\n')}\n`, workflows };
 }
 
+// One GitHub error annotation, which the run shows without a stack trace. GitHub's escapes keep a
+// message of several lines, such as a failed git command's, in one annotation.
+export function errorAnnotation(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return `::error::${message.trimEnd().replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')}`;
+}
+
 if (import.meta.main) {
-  const [template, tag, out] = process.argv.slice(2);
-  if (!template || !tag || !out) throw new Error('Usage: node scripts/template-update.ts <owner/repo> <release tag> <out dir>');
-  const update = applyUpdate({ dir: process.cwd(), template, source: `https://github.com/${template}.git`, tag });
-  if (update) {
-    writeFileSync(join(out, 'summary.md'), update.summary);
-    if (update.workflows.length > 0) writeFileSync(join(out, 'workflows.txt'), `${update.workflows.join('\n')}\n`);
+  try {
+    const [template, tag, out] = process.argv.slice(2);
+    if (!template || !tag || !out) throw new Error('Usage: node scripts/template-update.ts <owner/repo> <release tag> <out dir>');
+    const update = applyUpdate({ dir: process.cwd(), template, source: `https://github.com/${template}.git`, tag });
+    if (update) {
+      writeFileSync(join(out, 'summary.md'), update.summary);
+      if (update.workflows.length > 0) writeFileSync(join(out, 'workflows.txt'), `${update.workflows.join('\n')}\n`);
+    }
+  } catch (error) {
+    console.log(errorAnnotation(error));
+    process.exitCode = 1;
   }
 }

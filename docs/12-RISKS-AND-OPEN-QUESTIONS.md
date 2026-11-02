@@ -42,11 +42,9 @@ No spike has checked these provider behaviors. For each one, GitCRM works with e
 | The error for a write to a branch that requires pull requests | ADR-003, R-07 | A refused write shows GitHub's message, and the form stays (docs/10) | Needs a paid plan, or a public test repo |
 | API calls to the old name of a renamed repo | S-08 | Treats a failed call like any other | Rename a spike repo, then call the old name from a page |
 | Whether API commits count toward "6 pushes per minute" | S-05 | Each save is one user action. A bulk change is one commit | Many quick saves to a spike repo |
-| Whether the S-07 link fills in `Contents: Read and write` | S-07 | Onboarding tells users to check that Contents is set to Read and write | Open the link while signed in to GitHub |
-| Save prompts for the PAT in browsers and password managers | docs/05 | The PAT field is a real password field | By hand, in each major browser |
+| Save prompts for the PAT in browsers and password managers | docs/05 | The PAT field is a real password field | By hand, in each major browser. The owner did not notice a prompt in the 2026-11-01 run |
 | What a read-only fine-grained PAT gets from the write check on an empty repo | S-09, spec 01 | A `409` counts as writable, so a read-only token learns at Initialize | Connect a read-only token to an empty spike repo |
 | Whether `github.com/new` accepts an organization as `owner` | Spec 01 | The link fills in the typed owner | Open the link with an organization's name |
-| The template update in a real copy: the push to `main` and the Deploy start, with the workflow's own token | Spec 11 | Unit tests run the script against local repositories | Release v0.3.1, then click **Update GitCRM** in the owner's copy, which runs 0.3.0 |
 | First-load times from other networks | S-04 | The GraphQL time budget slows a large load instead of failing (ADR-022) | Run `spikes/bench-load.js` from another network |
 
 ## P0 spike record template
@@ -238,6 +236,7 @@ GitHub allows 60 s of GraphQL server time per minute, and says to estimate it fr
   - No parameter selects repositories.
 - **Decision:** the connection screen builds the link from the `owner/repo` the user typed: `?name=GitCRM+<repo>&description=<text>&target_name=<owner>&contents=write&expires_in=90`. The user must still choose "Only select repositories" and pick the repo; onboarding says so. The owner chose 90 days on 2026-11-01: fewer new tokens than the 30-day default, with a longer window for a leaked token. An org's policy can make it shorter.
 - **Follow-up:** the owner created the S-02 browser-run token from this link (2026-10-28). The token first ended up with no permissions; it is not known whether the link failed to fill in Contents. Onboarding therefore tells users to check that Contents is set to Read and write.
+- **2026-11-01:** in the owner's live run (S-09), the form showed `Contents: Read and write` from the link. As the docs say, no repository was selected; the owner picked it.
 
 ### S-08: Repo checks and permission failures
 
@@ -302,8 +301,12 @@ GitHub allows 60 s of GraphQL server time per minute, and says to estimate it fr
 | "Use this template" → `therecluse26/gitcrm-app`, public | One commit. The API shows `template_repository: therecluse26/GitCRM` |
 | Deploy on the copy's first commit | GitHub ran it (event `push`, 1:23 AM EDT). The owner turned on Pages before the deploy job started, so every job passed by 1:26 AM EDT |
 | The pre-filled `github.com/new` link | `therecluse26/gitcrm-data` was created private, with the description from the link (1:35 PM EST) |
+| The token form from the connection screen's link | `Contents: Read and write` was filled in. No repository was selected (S-07); the owner picked `gitcrm-data` |
 | Initialize on that empty repo, with a fine-grained PAT | The Contents API PUT made the first commit, "gitcrm: initialize workspace" (1:36 PM EST) |
+| The first record | The company "TestCorp" is one commit, "gitcrm: create company 501d4424" (4:20:30 PM EST). The app's parsers accept the record file and `workspace.json`, and re-serialize both to the same bytes |
 | The first update of the copy, to `v0.3.0` | Pushed by hand, because the copy's old workflow could not change its own file. The push needed a login with the `workflow` scope. Deploy ran on the push and passed in 2.5 minutes |
+| A release whose `package.json` has another version | A first `v0.3.1` was created by mistake on a commit with `0.3.0`. The copy showed the banner, and the owner ran the update (4:20 PM EST). The script refused the release, and pushed nothing. The release was deleted and made again on the right commit |
+| The update button, to `v0.3.1` | The owner clicked **Update GitCRM**, then **Run workflow** (5:06:46 PM EST). With the workflow's own token, the job pushed "Update GitCRM to v0.3.1" to `main` (5:06:56 PM) and started Deploy (5:06:58 PM). Deploy passed at 5:09:26 PM. The live bundle has `0.3.1`, and the banner is gone |
 
 
 ## Most important product decision

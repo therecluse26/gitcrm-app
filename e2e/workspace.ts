@@ -58,6 +58,6 @@ export const field = (page: Page, label: string) => page.getByLabel(label, { exa
 
 export async function openContact(page: Page, name: string) {
   await go(page, 'Contacts');
-  await page.getByRole('list', { name: 'Contacts' }).getByRole('link', { name }).click();
+  await page.getByRole('table', { name: 'Contacts' }).getByRole('link', { name }).click();
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
 }

@@ -54,7 +54,7 @@ test.describe('load', () => {
     await expect(homeHeading(page)).toBeVisible();
     expect(fake.count('POST', /\/graphql$/)).toBe(4);
     await go(page, 'Contacts');
-    await expect(page.getByRole('list', { name: 'Contacts' })).toContainText('Ava Bennett');
+    await expect(page.getByRole('table', { name: 'Contacts' })).toContainText('Ava Bennett');
   });
 
   test('workspace settings from a newer GitCRM, or not valid, block the workspace and nothing is written', async ({ page }) => {
@@ -158,7 +158,7 @@ test.describe('save', () => {
     await page.reload();
     await expect(status(page)).toHaveText('Up to date');
     await go(page, 'Contacts');
-    await expect(page.getByRole('list', { name: 'Contacts' }).getByRole('link')).toHaveText(['Ava Bennett-Park']);
+    await expect(page.getByRole('table', { name: 'Contacts' }).getByRole('link')).toHaveText(['Ava Bennett-Park']);
   });
 
   // A stand-in response: no spike recorded what GitHub returns for a branch that requires pull requests (docs/12).

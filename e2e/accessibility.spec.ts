@@ -132,12 +132,16 @@ async function checkPage(page: Page, name: string) {
   expect.soft(stops.filter(({ contrast }) => contrast < 3), `${name}: focus indicators below 3:1`).toEqual([]);
 }
 
-for (const [name, path] of PAGES) {
-  test(`${name}: axe finds nothing, and focus indicators and field borders reach 3:1`, async ({ page }) => {
-    await open(page, records);
-    await visit(page, path);
-    await checkPage(page, name);
-  });
+// Each page in both themes (spec 12). Dark is the default; a stored choice selects light.
+for (const theme of ['dark', 'light'] as const) {
+  for (const [name, path] of PAGES) {
+    test(`${name}, ${theme}: axe finds nothing, and focus indicators and field borders reach 3:1`, async ({ page }) => {
+      if (theme === 'light') await page.addInitScript(() => localStorage.setItem('gitcrm.theme', 'light'));
+      await open(page, records);
+      await visit(page, path);
+      await checkPage(page, `${name}, ${theme}`);
+    });
+  }
 }
 
 test('the connect screen and workspace setup, with and without field errors', async ({ page }) => {

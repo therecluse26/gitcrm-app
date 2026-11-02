@@ -76,7 +76,7 @@ Scenario: Nothing to do
 Scenario: A release with the wrong version
   Given the release tag is v0.4.0, and package.json at that tag has another version
   When the workflow runs
-  Then the workflow fails, names both versions, and pushes nothing
+  Then the workflow fails with one error annotation that names both versions, and pushes nothing
 
 Scenario: Another branch
   Given I run the workflow from a branch other than my default branch
@@ -99,5 +99,5 @@ Scenario: The template cannot be read
 - An update replaces the owner's own changes to the template's files. To undo an update, revert its commit on `main`; the push deploys the old version.
 - A push with the workflow's own token starts no workflow, so the update job starts Deploy itself (`actions: write`).
 - The release request counts against GitHub's limit for requests with no token: 60 per hour for each IP address. One page load sends at most one.
-- Unverified: the push to `main`, and the Deploy start, with the workflow's own token in a copy (docs/12, "Not verified yet").
+- Verified in the owner's copy on 2026-11-01 (docs/12, S-09): the push to `main` and the Deploy start with the workflow's own token, and the refusal of a release with another version. The update took about 2.5 minutes from the click to the live site.
 - The release `v0.2.0` has version `0.1.0` in `package.json`. The workflow refuses it, so the first release that copies can take is `v0.3.0`.

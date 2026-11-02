@@ -50,7 +50,7 @@ The built `index.html` carries this policy in a `<meta>` tag, right after the ch
 | `default-src` | `'none'` | Anything not listed below is blocked: frames, workers, plugins, media, and images |
 | `script-src` | `'self'` | The app's own bundle only: no inline script, no `eval`, no script from another site |
 | `style-src` | `'self'` | The app's own stylesheet only |
-| `font-src` | `'self'` | The Geist font files in the build |
+| `font-src` | `'self'` | The IBM Plex font files in the build (spec 12) |
 | `connect-src` | `https://api.github.com` | The PAT and CRM data can reach no other site |
 | `base-uri` | `'none'` | A planted `<base>` tag cannot move the relative asset paths |
 | `form-action` | `'none'` | No form submits natively; the app handles every form in script |

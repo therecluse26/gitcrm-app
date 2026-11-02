@@ -1,22 +1,23 @@
 // The contact list (spec 02): search, sort, and archived contacts on request, in pages of 50
-// (spec 08).
+// (spec 08). A table with a column per field (spec 12).
 import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { memo, useCallback, useMemo, useRef } from 'react';
 import { selectReadOnly, useApp } from '@/app/store.ts';
 import type { Contact } from '@/core/schemas.ts';
+import { table, tableBox, td, th } from '@/ui/data-table.ts';
 import { linkButton } from '@/ui/link-button.ts';
 import { ArchivedBadge, ListSummary, ListToolbar, Pager } from '@/ui/record-page.tsx';
 import { onePage } from '../list-page.ts';
 import { listRecords } from '../list-query.ts';
-import { useRecords } from '../records.ts';
+import { formatDate, useRecords } from '../records.ts';
 
 export function ContactsPage() {
   const contacts = useRecords('contact');
   const companies = useRecords('company');
   const { query, showArchived, sort, page: index } = useApp((s) => s.lists.contact);
   const readOnly = useApp(selectReadOnly);
-  const list = useRef<HTMLUListElement>(null);
+  const list = useRef<HTMLTableElement>(null);
   const companyNames = useMemo(() => new Map(companies.map(({ record }) => [record.id, record.name])), [companies]);
   const companyOf = useCallback((companyId: string | null) => (companyId && companyNames.get(companyId)) || '', [companyNames]);
   const { shown, hiddenArchived } = useMemo(
@@ -48,11 +49,22 @@ export function ContactsPage() {
           <ListToolbar type="contact" plural="contacts" />
           <ListSummary shown={shown.length} hiddenArchived={hiddenArchived} singular="contact" plural="contacts" page={page} />
           {shown.length > 0 && (
-            <ul ref={list} tabIndex={-1} aria-label="Contacts" className="divide-y rounded-lg border outline-none">
-              {page.rows.map((c) => (
-                <ContactRow key={c.id} contact={c} company={companyOf(c.companyId)} />
-              ))}
-            </ul>
+            <div className={tableBox}>
+              <table ref={list} tabIndex={-1} aria-label="Contacts" className={table}>
+                <thead>
+                  <tr>
+                    {['Name', 'Company', 'Email', 'Phone', 'Tags', 'Updated'].map((name) => (
+                      <th key={name} className={th}>{name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {page.rows.map((c) => (
+                    <ContactRow key={c.id} contact={c} company={companyOf(c.companyId)} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           <Pager page={page} label="Contacts" list={list} onPage={(page) => useApp.getState().setListView('contact', { page })} />
         </>
@@ -64,14 +76,20 @@ export function ContactsPage() {
 // A memo: a save draws again only the row of the record that changed (docs/06).
 const ContactRow = memo(function ContactRow({ contact: c, company }: { contact: Contact; company: string }) {
   return (
-    <li className="flex flex-col gap-0.5 px-3 py-2">
-      <span className="flex flex-wrap items-center gap-2">
-        <Link to="/contacts/$contactId" params={{ contactId: c.id }} className="font-medium break-words hover:underline">
-          {c.name}
-        </Link>
-        {c.archivedAt && <ArchivedBadge />}
-      </span>
-      <span className="text-sm break-words text-muted-foreground">{[company, c.emails[0]].filter(Boolean).join(' · ')}</span>
-    </li>
+    <tr>
+      <td className={td}>
+        <span className="flex items-center gap-2">
+          <Link to="/contacts/$contactId" params={{ contactId: c.id }} className="font-medium hover:underline">
+            {c.name}
+          </Link>
+          {c.archivedAt && <ArchivedBadge />}
+        </span>
+      </td>
+      <td className={td}>{company}</td>
+      <td className={`${td} text-muted-foreground`}>{c.emails[0]}</td>
+      <td className={`${td} font-mono text-xs whitespace-nowrap text-muted-foreground`}>{c.phones[0]}</td>
+      <td className={td}>{c.tags.join(', ')}</td>
+      <td className={`${td} whitespace-nowrap text-muted-foreground`}>{formatDate(c.updatedAt)}</td>
+    </tr>
   );
 });
